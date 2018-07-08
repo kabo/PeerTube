@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  IGW:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties: {}
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref IGW
+  RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+  InternetRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: IGW
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+  SubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+  SubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+  SubnetARoutes:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetA
+  SubnetBRoutes:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetB
+Outputs:
+  VpcId:
+    Value: !Ref VPC
+  SubnetAId:
+    Value: !Ref SubnetA
+  SubnetBId:
+    Value: !Ref SubnetB
+
