@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'PeerTube VPC ID'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  PgUser:
+    Type: String
+    Description: 'The PostgreSQL username'
+  PgPassword:
+    Type: String
+    Description: 'The PostgreSQL password for PGUSER'
+  DBInstanceClass:
+    Type: String
+    Description: 'e.g. "db.t2.micro"'
+  AllowIp:
+    Type: String
+    Description: An external IP that is allowed access to resources
+  MultiAZ:
+    Type: String
+    Default: false
+Resources:
+  PeerTubeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ingress to PeerTube
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+  #
+  # RDS
+  #
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    #DeletionPolicy: Snapshot
+    Properties:
+      Engine: postgres
+      EngineVersion: 10.3
+      MasterUsername: !Ref PgUser
+      MasterUserPassword: !Ref PgPassword
+      DBInstanceClass: !Ref DBInstanceClass
+      VPCSecurityGroups:
+        - !Sub ${RDSSecurityGroup.GroupId}
+      AllocatedStorage: 20
+      StorageType: gp2
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      MultiAZ: !Ref MultiAZ
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "RDS Subnet Group"
+      SubnetIds: !Ref SubnetIds
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ingress for RDS DBInstance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '5432'
+          ToPort: '5432'
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: '5432'
+          ToPort: '5432'
+          CidrIp: !Sub "${AllowIp}/32"
+        - IpProtocol: tcp
+          FromPort: '5432'
+          ToPort: '5432'
+          SourceSecurityGroupId:
+            Ref: PeerTubeSecurityGroup
+  #
+  # Redis
+  #
+  ElasticacheSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Elasticache Security Group"
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: "6379"
+          ToPort: "6379"
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: '6379'
+          ToPort: '6379'
+          CidrIp: !Sub "${AllowIp}/32"
+        - IpProtocol: "tcp"
+          FromPort: "6379"
+          ToPort: "6379"
+          SourceSecurityGroupId:
+            Ref: PeerTubeSecurityGroup
+  ElasticacheSubnetGroup: 
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Properties: 
+      Description: "Cache Subnet Group"
+      SubnetIds: !Ref SubnetIds
+  ElasticacheCluster:
+    Type: "AWS::ElastiCache::CacheCluster"
+    Properties:
+      AutoMinorVersionUpgrade: true
+      Engine: redis
+      CacheNodeType: cache.t2.micro
+      CacheSubnetGroupName: !Ref ElasticacheSubnetGroup
+      NumCacheNodes: 1
+      VpcSecurityGroupIds:
+        - !Sub "${ElasticacheSecurityGroup.GroupId}"
+

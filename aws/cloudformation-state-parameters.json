@@ -1,0 +1,27 @@
+[
+  {
+    "ParameterKey": "PgUser",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "PgPassword",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "SubnetIds",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "DBInstanceClass",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "AllowIp",
+    "ParameterValue": ""
+  }
+]
+
