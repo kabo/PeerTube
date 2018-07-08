@@ -110,4 +110,10 @@ Resources:
       NumCacheNodes: 1
       VpcSecurityGroupIds:
         - !Sub "${ElasticacheSecurityGroup.GroupId}"
+  #
+  # ECR
+  #
+  Repo:
+    Type: "AWS::ECR::Repository"
+    Properties: {}
 

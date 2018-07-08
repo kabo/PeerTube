@@ -16,7 +16,7 @@ Traditional plan:
 Docker plan:
 
  - [x] Cloudformation stack to set up VPC
- - [ ] Cloudformation stack to set up security group, RDS, ElastiCache, etc.
+ - [ ] Cloudformation stack to set up security group, RDS, ElastiCache, ECR
  - [ ] Scripts to set up EKS with the PeerTube docker image OR [ECS with spot fleet](https://aws.amazon.com/blogs/compute/powering-your-amazon-ecs-clusters-with-spot-fleet/)
  - [ ] Cloudformation stack to set up CloudFront distribution
 
@@ -34,6 +34,7 @@ This stack has infrastructure stuff
 
 ```shell
 aws cloudformation create-stack --stack-name peertube-vpc --template-body file://./cloudformation-vpc.yml
+aws cloudformation update-stack --stack-name peertube-vpc --template-body file://./cloudformation-vpc.yml
 ```
 
 ### Cloudformation state holders
@@ -42,6 +43,7 @@ This stack has the stuff that holds state, such as databases
 
 ```shell
 aws cloudformation create-stack --stack-name peertube-state --template-body file://./cloudformation-state.yml --parameters file://./cloudformation-state-parameters.json
+aws cloudformation update-stack --stack-name peertube-state --template-body file://./cloudformation-state.yml --parameters file://./cloudformation-state-parameters.json
 ```
 
 
